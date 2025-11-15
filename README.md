@@ -2,7 +2,7 @@
 
 > **Aplikasi web interaktif untuk melacak urutan pertempuran dan status pemain dalam game Magic Chess**
 
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://yourusername.github.io/magic-chess-tracker/)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://manusiakerupukk.github.io/magic-chess-tracker/)
 
 ## 🎮 Tentang Aplikasi
 
