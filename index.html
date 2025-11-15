@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Chess - Prediksi Urutan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+        
+        .dragging {
+            opacity: 0.5;
+            transform: scale(1.02);
+        }
+        
+        .drag-over {
+            border-top: 3px solid #f59e0b;
+        }
+        
+        .glow {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+        
+        .opponent-item {
+            transition: all 0.3s ease;
+        }
+        
+        .opponent-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .eliminated {
+            background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%) !important;
+            border-color: #dc2626 !important;
+            opacity: 0.7;
+        }
+        
+        .eliminated .player-name {
+            text-decoration: line-through;
+        }
+        
+        .fighting {
+            background: linear-gradient(135deg, #065f46 0%, #064e3b 100%) !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .eliminate-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .eliminate-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8 mt-4">
+            <h1 class="text-4xl font-bold text-amber-400 mb-2">⚔️ Magic Chess</h1>
+            <p class="text-gray-300 text-sm">Prediksi Urutan Musuh</p>
+        </div>
+
+        <!-- Step 1: Input Form -->
+        <div id="inputSection" class="bg-gray-800 rounded-lg p-6 shadow-2xl glow mb-6">
+            <h2 class="text-2xl font-bold text-amber-400 mb-4">📝 Masukkan Nama 7 Musuh</h2>
+            <div id="inputFields" class="space-y-3 mb-4">
+                <!-- Input fields will be generated here -->
+            </div>
+            <button onclick="saveOpponents()" 
+                    class="w-full bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105">
+                🎯 Simpan & Mulai Prediksi
+            </button>
+        </div>
+
+        <!-- Step 2: Reorderable List -->
+        <div id="predictionSection" class="hidden bg-gray-800 rounded-lg p-6 shadow-2xl glow">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-amber-400">🔮 Atur Urutan Musuh</h2>
+                <button onclick="resetApp()" 
+                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition duration-300">
+                    🔄 Reset
+                </button>
+            </div>
+            <p class="text-gray-300 text-sm mb-4">Seret dan lepas untuk mengatur urutan prediksi</p>
+            
+            <div id="opponentList" class="space-y-3">
+                <!-- Draggable items will be generated here -->
+            </div>
+            
+            <div class="mt-6 bg-gradient-to-br from-amber-900 to-gray-900 rounded-lg p-6 border-2 border-amber-500 glow">
+                <h3 class="text-2xl font-bold text-amber-400 mb-2 text-center">📊 URUTAN PREDIKSI</h3>
+                <p class="text-center text-gray-300 text-sm mb-4">
+                    💡 Klik player = Fighting | Kill = Eliminasi | Undo = Batalkan
+                </p>
+                <ol id="orderDisplay" class="space-y-3">
+                    <!-- Order will be displayed here -->
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let opponents = [];
+        let draggedElement = null;
+        let eliminatedPlayers = new Set(); // Track eliminated players
+        let fightingPlayer = null; // Track current fighting player
+
+        // Local Storage Keys
+        const STORAGE_KEYS = {
+            opponents: 'magicChess_opponents',
+            eliminated: 'magicChess_eliminated',
+            fighting: 'magicChess_fighting'
+        };
+
+        // Save to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem(STORAGE_KEYS.opponents, JSON.stringify(opponents));
+            localStorage.setItem(STORAGE_KEYS.eliminated, JSON.stringify([...eliminatedPlayers]));
+            localStorage.setItem(STORAGE_KEYS.fighting, fightingPlayer || '');
+        }
+
+        // Load from localStorage
+        function loadFromLocalStorage() {
+            const savedOpponents = localStorage.getItem(STORAGE_KEYS.opponents);
+            const savedEliminated = localStorage.getItem(STORAGE_KEYS.eliminated);
+            const savedFighting = localStorage.getItem(STORAGE_KEYS.fighting);
+
+            if (savedOpponents) {
+                opponents = JSON.parse(savedOpponents);
+                eliminatedPlayers = new Set(JSON.parse(savedEliminated || '[]'));
+                fightingPlayer = savedFighting || null;
+
+                // If we have saved data, show prediction section
+                if (opponents.length > 0) {
+                    document.getElementById('inputSection').classList.add('hidden');
+                    document.getElementById('predictionSection').classList.remove('hidden');
+                    generateOpponentList();
+                    updateOrderDisplay();
+                }
+            }
+        }
+
+        // Initialize input fields
+        function initInputFields() {
+            const container = document.getElementById('inputFields');
+            for (let i = 1; i <= 7; i++) {
+                const div = document.createElement('div');
+                div.className = 'flex items-center space-x-2';
+                div.innerHTML = `
+                    <span class="text-amber-400 font-bold w-8">${i}.</span>
+                    <input type="text" 
+                           id="opponent${i}" 
+                           placeholder="Nama musuh ${i}"
+                           class="flex-1 bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                           maxlength="30">
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        // Save opponents and show prediction section
+        function saveOpponents() {
+            opponents = [];
+            let allFilled = true;
+            
+            for (let i = 1; i <= 7; i++) {
+                const input = document.getElementById(`opponent${i}`);
+                const name = input.value.trim();
+                
+                if (name === '') {
+                    allFilled = false;
+                    input.classList.add('ring-2', 'ring-red-500');
+                } else {
+                    input.classList.remove('ring-2', 'ring-red-500');
+                    opponents.push(name);
+                }
+            }
+            
+            if (!allFilled) {
+                alert('⚠️ Mohon isi semua 7 nama musuh!');
+                return;
+            }
+            
+            // Hide input section and show prediction section
+            document.getElementById('inputSection').classList.add('hidden');
+            document.getElementById('predictionSection').classList.remove('hidden');
+            
+            // Reset eliminated players and fighting status
+            eliminatedPlayers.clear();
+            fightingPlayer = null;
+            
+            // Generate draggable list
+            generateOpponentList();
+            updateOrderDisplay();
+            
+            // Save to localStorage
+            saveToLocalStorage();
+        }
+
+        // Generate draggable opponent list
+        function generateOpponentList() {
+            const container = document.getElementById('opponentList');
+            container.innerHTML = '';
+            
+            opponents.forEach((name, index) => {
+                const div = document.createElement('div');
+                div.className = 'opponent-item bg-gray-700 p-4 rounded-lg cursor-move flex items-center space-x-3 border-2 border-gray-600 hover:border-amber-500';
+                div.draggable = true;
+                div.dataset.index = index;
+                
+                div.innerHTML = `
+                    <span class="text-2xl">☰</span>
+                    <span class="bg-amber-500 text-gray-900 font-bold w-8 h-8 rounded-full flex items-center justify-center text-sm">
+                        ${index + 1}
+                    </span>
+                    <span class="text-white font-semibold flex-1">${name}</span>
+                    <span class="text-gray-400 text-sm">↕️</span>
+                `;
+                
+                // Drag events
+                div.addEventListener('dragstart', handleDragStart);
+                div.addEventListener('dragend', handleDragEnd);
+                div.addEventListener('dragover', handleDragOver);
+                div.addEventListener('drop', handleDrop);
+                div.addEventListener('dragenter', handleDragEnter);
+                div.addEventListener('dragleave', handleDragLeave);
+                
+                container.appendChild(div);
+            });
+        }
+
+        // Drag and drop handlers
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            
+            // Remove all drag-over classes
+            document.querySelectorAll('.opponent-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            if (this !== draggedElement) {
+                this.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== this) {
+                const draggedIndex = parseInt(draggedElement.dataset.index);
+                const targetIndex = parseInt(this.dataset.index);
+                
+                // Swap items in array
+                const temp = opponents[draggedIndex];
+                opponents[draggedIndex] = opponents[targetIndex];
+                opponents[targetIndex] = temp;
+                
+                // Regenerate list
+                generateOpponentList();
+                updateOrderDisplay();
+                
+                // Save to localStorage
+                saveToLocalStorage();
+            }
+            
+            return false;
+        }
+
+        // Update order display
+        function updateOrderDisplay() {
+            const container = document.getElementById('orderDisplay');
+            container.innerHTML = '';
+            
+            opponents.forEach((name, index) => {
+                const li = document.createElement('li');
+                const isEliminated = eliminatedPlayers.has(name);
+                const isFighting = fightingPlayer === name;
+                
+                li.className = `bg-gray-800 rounded-lg p-4 flex items-center space-x-3 border-2 border-gray-600 hover:border-amber-400 transition duration-300 ${isEliminated ? 'eliminated' : ''} ${isFighting ? 'fighting' : ''}`;
+                
+                li.innerHTML = `
+                    <div class="bg-amber-500 text-gray-900 font-black w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg ${isEliminated ? 'opacity-50' : ''}" 
+                         onclick="event.stopPropagation(); toggleFighting('${name}');"
+                         style="cursor: pointer;">
+                        ${index + 1}
+                    </div>
+                    <div class="flex-1" onclick="toggleFighting('${name}');" style="cursor: pointer;">
+                        <div class="text-white font-bold text-lg player-name">${name}</div>
+                        <div class="text-gray-400 text-sm">
+                            ${isEliminated ? '💀 Eliminated' : isFighting ? '⚔️ Fighting!' : 'Posisi ke-' + (index + 1)}
+                        </div>
+                    </div>
+                    <div class="text-3xl">
+                        ${isEliminated ? '💀' : isFighting ? '⚔️' : (index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎯')}
+                    </div>
+                    ${isEliminated ? `
+                        <button onclick="event.stopPropagation(); undoElimination('${name}');" 
+                                class="eliminate-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg flex items-center space-x-1">
+                            <span>↩️</span>
+                            <span>Undo</span>
+                        </button>
+                    ` : `
+                        <button onclick="event.stopPropagation(); eliminatePlayer('${name}');" 
+                                class="eliminate-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg flex items-center space-x-1">
+                            <span>💀</span>
+                            <span>Kill</span>
+                        </button>
+                    `}
+                `;
+                container.appendChild(li);
+            });
+        }
+        
+        // Toggle fighting status
+        function toggleFighting(playerName) {
+            // Don't allow fighting if player is eliminated
+            if (eliminatedPlayers.has(playerName)) {
+                return;
+            }
+            
+            if (fightingPlayer === playerName) {
+                fightingPlayer = null;
+            } else {
+                fightingPlayer = playerName;
+            }
+            updateOrderDisplay();
+            saveToLocalStorage();
+        }
+        
+        // Eliminate player
+        function eliminatePlayer(playerName) {
+            eliminatedPlayers.add(playerName);
+            // If the eliminated player was fighting, clear fighting status
+            if (fightingPlayer === playerName) {
+                fightingPlayer = null;
+            }
+            updateOrderDisplay();
+            saveToLocalStorage();
+        }
+        
+        // Undo elimination
+        function undoElimination(playerName) {
+            eliminatedPlayers.delete(playerName);
+            updateOrderDisplay();
+            saveToLocalStorage();
+        }
+        
+        // Toggle player elimination status (kept for backward compatibility)
+        function toggleElimination(playerName) {
+            if (eliminatedPlayers.has(playerName)) {
+                eliminatedPlayers.delete(playerName);
+            } else {
+                eliminatedPlayers.add(playerName);
+            }
+            updateOrderDisplay();
+        }
+
+        // Reset application
+        function resetApp() {
+            if (confirm('🔄 Yakin ingin mereset? Data akan hilang.')) {
+                opponents = [];
+                eliminatedPlayers.clear();
+                fightingPlayer = null;
+                
+                // Clear localStorage
+                localStorage.removeItem(STORAGE_KEYS.opponents);
+                localStorage.removeItem(STORAGE_KEYS.eliminated);
+                localStorage.removeItem(STORAGE_KEYS.fighting);
+                
+                // Clear input fields
+                for (let i = 1; i <= 7; i++) {
+                    document.getElementById(`opponent${i}`).value = '';
+                }
+                
+                // Show input section and hide prediction section
+                document.getElementById('inputSection').classList.remove('hidden');
+                document.getElementById('predictionSection').classList.add('hidden');
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initInputFields();
+            loadFromLocalStorage();
+        });
+    </script>
+</body>
+</html>
