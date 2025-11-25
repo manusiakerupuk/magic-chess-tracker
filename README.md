@@ -1,146 +1,169 @@
-# ⚔️ Magic Chess - Battle Order Tracker
+# Magic Chess PWA - Panduan Instalasi
 
-> **Aplikasi web interaktif untuk melacak urutan pertempuran dan status pemain dalam game Magic Chess**
+## 📁 Struktur File
 
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://manusiakerupukk.github.io/magic-chess-tracker/)
-
-## 🎮 Tentang Aplikasi
-
-**Magic Chess - Battle Order Tracker** adalah aplikasi web sederhana yang membantu pemain Magic Chess untuk:
-- 📝 Mencatat daftar 7 musuh dalam match
-- 🔄 Mengatur ulang prediksi urutan pertempuran dengan drag & drop
-- 🟢 Menandai pemain yang sedang bertarung (fighting mode)
-- 💀 Melacak pemain yang sudah dieliminasi
-- 💾 Menyimpan data secara otomatis di browser (tidak hilang saat refresh)
-
-## ✨ Fitur Utama
-
-### 1. **Input Nama Musuh**
-- Form untuk memasukkan 7 nama musuh
-- Validasi input untuk memastikan semua field terisi
-- Interface yang clean dan mudah digunakan
-
-### 2. **Drag & Drop Reordering**
-- Atur ulang urutan prediksi dengan menyeret item
-- Visual feedback saat drag (opacity & border highlight)
-- Smooth animations untuk UX yang lebih baik
-
-### 3. **Status Tracking**
-- 🟢 **Fighting Mode**: Klik nama pemain untuk tandai sedang bertarung (background hijau)
-- 💀 **Kill Button**: Tombol merah untuk menandai pemain eliminated
-- ↩️ **Undo Button**: Tombol hijau untuk membatalkan eliminasi (anti misclick!)
-
-### 4. **Persistent Storage**
-- Auto-save setiap perubahan ke localStorage browser
-- Data tetap tersimpan meskipun browser ditutup atau di-refresh
-- Tidak perlu login atau koneksi internet
-
-### 5. **Responsive Design**
-- Optimal untuk mobile dan desktop
-- Tema gelap dengan aksen amber/gold yang menarik
-- Tailwind CSS untuk styling modern
-
-## 🚀 Demo Langsung
-
-**[👉 Coba Aplikasi Di Sini](https://yourusername.github.io/magic-chess-tracker/)**
-
-## 📱 Screenshot
+Pastikan Anda memiliki struktur folder seperti ini:
 
 ```
-┌─────────────────────────┐
-│  ⚔️ Magic Chess        │
-│  Prediksi Urutan Musuh  │
-├─────────────────────────┤
-│ 📝 Input 7 Nama Musuh   │
-│ 1. [Player 1_____]      │
-│ 2. [Player 2_____]      │
-│ ...                     │
-└─────────────────────────┘
-
-┌─────────────────────────┐
-│ 🔮 Atur Urutan Musuh    │
-├─────────────────────────┤
-│ ☰ 1 Player 1      ↕️    │
-│ ☰ 2 Player 2      ↕️    │ (Drag & Drop)
-│ ...                     │
-├─────────────────────────┤
-│ 📊 URUTAN PREDIKSI      │
-├─────────────────────────┤
-│ 1 Player 1    🥇 [Kill] │ (Klik = Fighting)
-│ 2 Player 2    🥈 [Kill] │
-│ ...                     │
-└─────────────────────────┘
+magic-chess/
+│
+├── index.html
+├── manifest.json
+├── service-worker.js
+├── icon-192.png
+└── icon-512.png
 ```
 
-## 🎯 Cara Menggunakan
+## 🎨 Membuat Icon
 
-### **Step 1: Input Nama Musuh**
-1. Buka aplikasi
-2. Masukkan nama 7 musuh di form input
-3. Klik tombol **"🎯 Simpan & Mulai Prediksi"**
+Anda perlu membuat 2 file icon:
+- **icon-192.png** (192x192 pixel)
+- **icon-512.png** (512x512 pixel)
 
-### **Step 2: Atur Urutan Prediksi**
-1. Di section **"🔮 Atur Urutan Musuh"**:
-   - Seret dan lepas item untuk mengubah urutan
-   - Icon **☰** menandakan item bisa di-drag
+### Cara membuat icon:
 
-### **Step 3: Track Status Pertempuran**
-Di section **"📊 URUTAN PREDIKSI"**:
+**Opsi 1: Menggunakan Website Generator**
+1. Buka https://www.favicon-generator.org/ atau https://realfavicongenerator.net/
+2. Upload logo/gambar Anda (gunakan gambar dengan tema Magic Chess/pedang/shield)
+3. Generate dan download icon dalam ukuran 192x192 dan 512x512
 
-- **Klik nama/nomor pemain** → Tandai sedang bertarung (hijau)
-  - Background berubah hijau dengan glow effect
-  - Status: "⚔️ Fighting!"
-  - Klik lagi untuk cancel
+**Opsi 2: Menggunakan Canva**
+1. Buka Canva.com
+2. Buat desain custom 192x192 atau 512x512 pixel
+3. Desain dengan tema Magic Chess (gunakan emoji ⚔️, shield, atau crown)
+4. Export sebagai PNG
 
-- **Klik tombol "💀 Kill"** → Eliminasi pemain
-  - Background berubah merah
-  - Nama di-coret
-  - Status: "💀 Eliminated"
+**Opsi 3: Placeholder Sementara**
+Jika ingin cepat test, buat file PNG sederhana dengan background warna solid + emoji ⚔️
 
-- **Klik tombol "↩️ Undo"** → Batalkan eliminasi
-  - Pemain kembali ke status normal
-  - Berguna untuk mengatasi misclick
+## 🚀 Cara Deploy & Install
 
-### **Step 4: Reset (Opsional)**
-- Klik tombol **"🔄 Reset"** untuk memulai dari awal
-- Semua data akan dihapus dari localStorage
+### Metode 1: Deploy ke GitHub Pages (GRATIS)
 
-## 💾 Penyimpanan Data
+1. **Buat Repository GitHub**
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git branch -M main
+   git remote add origin https://github.com/USERNAME/magic-chess.git
+   git push -u origin main
+   ```
 
-Aplikasi menggunakan **localStorage** browser untuk menyimpan:
-- Daftar nama musuh
-- Urutan prediksi
-- Status eliminated players
-- Status fighting player
+2. **Aktifkan GitHub Pages**
+   - Buka Settings repository
+   - Scroll ke "Pages"
+   - Pilih branch "main"
+   - Klik Save
+   - Tunggu 1-2 menit
 
-**Data akan tetap tersimpan sampai Anda:**
-- Klik tombol Reset
-- Hapus cache browser
-- Gunakan mode Incognito/Private (data temporary)
+3. **Akses URL**
+   - URL: `https://USERNAME.github.io/magic-chess/`
+   - Buka di Chrome/Edge
 
-## 🛠️ Teknologi yang Digunakan
+4. **Install ke Desktop**
+   - Klik icon Install (+) di address bar
+   - Atau klik menu (⋮) → Install Magic Chess
 
-- **HTML5** - Struktur aplikasi
-- **CSS3** - Styling & animations
-- **JavaScript (Vanilla)** - Logic & interaktivity
-- **Tailwind CSS** - Utility-first CSS framework
-- **LocalStorage API** - Data persistence
+### Metode 2: Deploy ke Netlify (GRATIS)
 
-## 📄 License
+1. **Buka Netlify.com** dan login
+2. **Drag & drop** folder magic-chess ke Netlify
+3. **Akses URL** yang diberikan (contoh: `https://random-name.netlify.app`)
+4. **Install** dari browser
 
-Distributed under the MIT License. See `LICENSE` for more information.
+### Metode 3: Deploy ke Vercel (GRATIS)
 
-## 📞 Kontak & Support
+1. **Buka Vercel.com** dan login
+2. **Import Git Repository** atau upload folder
+3. **Deploy** (otomatis)
+4. **Akses & Install**
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/magic-chess-tracker/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/magic-chess-tracker/discussions)
+### Metode 4: Local Testing dengan Python
 
-## ⭐ Support Project
+```bash
+# Masuk ke folder
+cd magic-chess
 
-Jika aplikasi ini berguna, berikan ⭐ di GitHub!
+# Jalankan server
+python -m http.server 8000
+
+# Buka browser
+# http://localhost:8000
+```
+
+⚠️ **Catatan**: PWA hanya bisa diinstall jika:
+- Diakses via HTTPS (atau localhost)
+- Memiliki manifest.json valid
+- Memiliki service worker
+
+## 📱 Cara Install di Berbagai Platform
+
+### Windows (Chrome/Edge)
+1. Buka website
+2. Klik icon **+** di address bar, atau
+3. Klik **⋮** (menu) → **Install Magic Chess**
+4. Aplikasi akan muncul di Start Menu
+
+### macOS (Chrome/Safari)
+1. Buka website
+2. Klik **Share** → **Add to Dock**, atau
+3. Chrome: Klik **⋮** → **Install Magic Chess**
+
+### Linux (Chrome)
+1. Buka website
+2. Klik **⋮** → **Install Magic Chess**
+3. Aplikasi akan muncul di Application Menu
+
+### Android
+1. Buka website di Chrome
+2. Klik banner "Add to Home Screen", atau
+3. Menu **⋮** → **Add to Home Screen**
+
+### iOS/iPad
+1. Buka website di Safari
+2. Klik **Share** button
+3. Pilih **Add to Home Screen**
+
+## ✅ Fitur PWA
+
+✨ **Install sebagai aplikasi native**
+💾 **Bekerja offline** (setelah pertama kali dibuka)
+📱 **Tampil di Start Menu / Dock / Home Screen**
+🚀 **Lebih cepat dari website biasa**
+💽 **Data tersimpan di local storage**
+
+## 🔧 Troubleshooting
+
+**Q: Icon tidak muncul saat install?**
+A: Pastikan file icon-192.png dan icon-512.png ada di folder yang sama
+
+**Q: Tidak bisa install?**
+A: Harus diakses via HTTPS (deploy online) atau localhost
+
+**Q: Service Worker error?**
+A: Buka DevTools (F12) → Console, lihat error message
+
+**Q: Aplikasi tidak update?**
+A: Hapus cache browser atau ubah CACHE_NAME di service-worker.js
+
+## 🎯 Testing PWA
+
+1. Buka Chrome DevTools (F12)
+2. Tab "Application"
+3. Cek:
+   - Manifest ✅
+   - Service Workers ✅
+   - Cache Storage ✅
+4. Test Lighthouse PWA Score
+
+## 📞 Support
+
+Jika ada masalah, cek:
+- Browser console untuk error
+- Manifest.json valid di validator
+- HTTPS aktif (jika deploy online)
 
 ---
 
-**Dibuat dengan ❤️ untuk komunitas Magic Chess**
-
-*Disclaimer: Aplikasi ini tidak berafiliasi dengan Mobile Legends: Bang Bang atau Moonton*
+**Selamat! Aplikasi Magic Chess Anda sekarang bisa diinstall seperti aplikasi desktop! ⚔️**
