@@ -1,471 +1,770 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1a1a2e">
-    <meta name="description" content="Magic Chess - Aplikasi Prediksi Urutan Musuh">
-    <title>Magic Chess - Prediksi Urutan</title>
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1a1a2e" />
+    <meta
+      name="description"
+      content="Magic Chess - Aplikasi Prediksi Urutan Musuh"
+    />
+    <title>Magic Chess - Prediksi Urutan (UX Optimized)</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
+      body {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+      }
+
+      .glow {
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+      }
+
+      /* Tambahan Style untuk highlight Fighting */
+      .fighting-pulse {
+        animation: fightingPulse 1.5s infinite;
+      }
+
+      @keyframes fightingPulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
         }
-        
-        .dragging {
-            opacity: 0.5;
-            transform: scale(1.02);
+        50% {
+          box-shadow: 0 0 15px rgba(16, 185, 129, 0.9);
         }
-        
-        .drag-over {
-            border-top: 3px solid #f59e0b;
+      }
+
+      .eliminated {
+        background: linear-gradient(
+          135deg,
+          #7f1d1d 0%,
+          #450a0a 100%
+        ) !important;
+        border-color: #dc2626 !important;
+        opacity: 0.7;
+      }
+
+      .eliminated .player-name {
+        text-decoration: line-through;
+      }
+
+      .fighting {
+        background: linear-gradient(
+          135deg,
+          #065f46 0%,
+          #064e3b 100%
+        ) !important;
+        border-color: #10b981 !important;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+      }
+
+      .eliminate-btn {
+        transition: all 0.3s ease;
+      }
+
+      .eliminate-btn:active {
+        transform: scale(0.95);
+      }
+
+      .select-container {
+        position: relative;
+      }
+
+      .position-badge {
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
         }
-        
-        .glow {
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        50% {
+          opacity: 0.8;
         }
-        
-        .opponent-item {
-            transition: all 0.3s ease;
+      }
+
+      .success-animation {
+        animation: successPulse 0.5s ease;
+      }
+
+      @keyframes successPulse {
+        0% {
+          transform: scale(1);
         }
-        
-        .opponent-item:hover {
-            transform: translateX(5px);
+        50% {
+          transform: scale(1.05);
         }
-        
-        .eliminated {
-            background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%) !important;
-            border-color: #dc2626 !important;
-            opacity: 0.7;
+        100% {
+          transform: scale(1);
         }
-        
-        .eliminated .player-name {
-            text-decoration: line-through;
+      }
+
+      .empty-slot {
+        border: 2px dashed #4b5563;
+        background: rgba(31, 41, 55, 0.5);
+      }
+
+      .filled-slot {
+        border: 2px solid #f59e0b;
+        background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+      }
+
+      .auto-filled-slot {
+        border: 2px solid #10b981;
+        background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
+      }
+
+      .select-arrow {
+        pointer-events: none;
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .auto-label {
+        animation: fadeIn 0.5s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
         }
-        
-        .fighting {
-            background: linear-gradient(135deg, #065f46 0%, #064e3b 100%) !important;
-            border-color: #10b981 !important;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-        
-        .eliminate-btn {
-            transition: all 0.3s ease;
-        }
-        
-        .eliminate-btn:active {
-            transform: scale(0.95);
-        }
-        
-        /* Install prompt styling */
-        #installPrompt {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            padding: 16px 24px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(245, 158, 11, 0.5);
-            display: none;
-            z-index: 1000;
-            animation: slideUp 0.5s ease;
-        }
-        
-        @keyframes slideUp {
-            from {
-                transform: translateX(-50%) translateY(100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-        }
+      }
     </style>
-</head>
-<body class="p-4">
-    <!-- Install Prompt -->
-    <div id="installPrompt">
-        <div class="flex items-center space-x-4">
-            <div class="text-gray-900">
-                <p class="font-bold">📱 Install Magic Chess</p>
-                <p class="text-sm">Install sebagai aplikasi desktop</p>
-            </div>
-            <button id="installBtn" class="px-6 py-2 font-bold transition bg-gray-900 rounded-lg text-amber-400 hover:bg-gray-800">
-                Install
-            </button>
-            <button id="dismissBtn" class="px-4 py-2 text-white transition bg-gray-800 rounded-lg hover:bg-gray-700">
-                ✕
-            </button>
-        </div>
-    </div>
-
+  </head>
+  <body class="p-4">
     <div class="max-w-2xl mx-auto">
-        <!-- Header -->
-        <div class="mt-4 mb-8 text-center">
-            <h1 class="mb-2 text-4xl font-bold text-amber-400">⚔️ Magic Chess</h1>
-            <p class="text-sm text-gray-300">Prediksi Urutan Musuh</p>
-            <p class="mt-1 text-xs text-gray-500" id="appStatus">
-                <span id="onlineStatus">🟢 Online</span>
-            </p>
-        </div>
+      <div class="mt-4 mb-8 text-center">
+        <h1 class="mb-2 text-4xl font-bold text-amber-400">⚔️ Magic Chess</h1>
+        <p class="text-sm text-gray-300">
+          Prediksi Urutan Musuh - **UX Optimized**
+        </p>
+        <p class="mt-2 text-xs text-gray-500">
+          <span id="savedIndicator" class="hidden text-green-400"
+            >✓ Data tersimpan otomatis</span
+          >
+        </p>
+      </div>
 
-        <!-- Step 1: Input Form -->
-        <div id="inputSection" class="p-6 mb-6 bg-gray-800 rounded-lg shadow-2xl glow">
-            <h2 class="mb-4 text-2xl font-bold text-amber-400">📝 Masukkan Nama 7 Musuh</h2>
-            <div id="inputFields" class="mb-4 space-y-3">
-                <!-- Input fields will be generated here -->
-            </div>
-            <button onclick="saveOpponents()" 
-                    class="w-full px-4 py-3 font-bold text-gray-900 transition duration-300 transform rounded-lg bg-amber-500 hover:bg-amber-600 hover:scale-105">
-                🎯 Simpan & Mulai Prediksi
-            </button>
+      <div
+        id="inputSection"
+        class="p-6 mb-6 bg-gray-800 rounded-lg shadow-2xl glow"
+      >
+        <h2 class="mb-4 text-2xl font-bold text-amber-400">
+          📝 Masukkan Nama 7 Musuh
+        </h2>
+        <div id="inputFields" class="mb-4 space-y-3"></div>
+        <div class="flex gap-3">
+          <button
+            onclick="saveOpponents()"
+            class="flex-1 px-4 py-3 font-bold text-gray-900 transition duration-300 transform rounded-lg bg-amber-500 hover:bg-amber-600 hover:scale-105"
+          >
+            🎯 Simpan & Mulai Prediksi (Ctrl+S)
+          </button>
+          <button
+            onclick="loadFromHistory()"
+            class="px-4 py-3 font-bold text-white transition duration-300 bg-blue-600 rounded-lg hover:bg-blue-700"
+            title="Load data terakhir"
+          >
+            📋 Load
+          </button>
         </div>
+      </div>
 
-        <!-- Step 2: Reorderable List -->
-        <div id="predictionSection" class="hidden p-6 bg-gray-800 rounded-lg shadow-2xl glow">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-amber-400">🔮 Atur Urutan Musuh</h2>
-                <button onclick="resetApp()" 
-                        class="px-4 py-2 text-sm text-white transition duration-300 bg-red-600 rounded-lg hover:bg-red-700">
-                    🔄 Reset
-                </button>
-            </div>
-            <p class="mb-4 text-sm text-gray-300">Seret dan lepas untuk mengatur urutan prediksi</p>
-            
-            <div id="opponentList" class="space-y-3">
-                <!-- Draggable items will be generated here -->
-            </div>
-            
-            <div class="p-6 mt-6 border-2 rounded-lg bg-gradient-to-br from-amber-900 to-gray-900 border-amber-500 glow">
-                <h3 class="mb-2 text-2xl font-bold text-center text-amber-400">📊 URUTAN PREDIKSI</h3>
-                <p class="mb-4 text-sm text-center text-gray-300">
-                    💡 Klik player = Fighting | Kill = Eliminasi | Undo = Batalkan
-                </p>
-                <ol id="orderDisplay" class="space-y-3">
-                    <!-- Order will be displayed here -->
-                </ol>
-            </div>
+      <div
+        id="predictionSection"
+        class="hidden p-6 bg-gray-800 rounded-lg shadow-2xl glow"
+      >
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-2xl font-bold text-amber-400">
+            🔮 Atur Urutan Musuh
+          </h2>
+          <button
+            onclick="resetApp()"
+            class="px-4 py-2 text-sm text-white transition duration-300 bg-red-600 rounded-lg hover:bg-red-700"
+          >
+            🔄 Reset
+          </button>
         </div>
+        <p class="mb-4 text-sm text-gray-300">
+          💡 Pilih 6 musuh pertama, yang ke-7 akan otomatis terisi
+        </p>
+
+        <div id="selectionList" class="mb-6 space-y-3"></div>
+
+        <div
+          class="p-6 mt-6 border-2 rounded-lg bg-gradient-to-br from-amber-900 to-gray-900 border-amber-500 glow"
+        >
+          <h3 class="mb-2 text-2xl font-bold text-center text-amber-400">
+            📊 URUTAN PLAYER AKTIF
+          </h3>
+          <p class="mb-4 text-sm text-center text-gray-300">
+            💡 Urutan di bawah disesuaikan dengan player yang **aktif**
+          </p>
+          <ol id="orderDisplay" class="space-y-3"></ol>
+        </div>
+      </div>
     </div>
 
     <script>
-        let opponents = [];
-        let draggedElement = null;
-        let eliminatedPlayers = new Set();
-        let fightingPlayer = null;
-        let deferredPrompt;
+      let opponents = [];
+      let selectedOrder = new Array(7).fill(null);
+      let eliminatedPlayers = new Set();
+      let fightingPlayer = null;
 
-        const STORAGE_KEYS = {
-            opponents: 'magicChess_opponents',
-            eliminated: 'magicChess_eliminated',
-            fighting: 'magicChess_fighting'
-        };
+      const STORAGE_KEYS = {
+        opponents: "magicChess_opponents",
+        order: "magicChess_order",
+        eliminated: "magicChess_eliminated",
+        fighting: "magicChess_fighting",
+        history: "magicChess_history",
+      };
 
-        // PWA Installation
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installPrompt').style.display = 'block';
-        });
+      function showSavedIndicator() {
+        const indicator = document.getElementById("savedIndicator");
+        indicator.classList.remove("hidden");
+        setTimeout(() => indicator.classList.add("hidden"), 2000);
+      }
 
-        document.getElementById('installBtn').addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User response: ${outcome}`);
-                deferredPrompt = null;
-                document.getElementById('installPrompt').style.display = 'none';
-            }
-        });
+      function saveToLocalStorage() {
+        localStorage.setItem(STORAGE_KEYS.opponents, JSON.stringify(opponents));
+        localStorage.setItem(STORAGE_KEYS.order, JSON.stringify(selectedOrder));
+        localStorage.setItem(
+          STORAGE_KEYS.eliminated,
+          JSON.stringify([...eliminatedPlayers])
+        );
+        localStorage.setItem(STORAGE_KEYS.fighting, fightingPlayer || "");
+        showSavedIndicator();
+      }
 
-        document.getElementById('dismissBtn').addEventListener('click', () => {
-            document.getElementById('installPrompt').style.display = 'none';
-        });
-
-        // Online/Offline Status
-        window.addEventListener('online', () => {
-            document.getElementById('onlineStatus').innerHTML = '🟢 Online';
-        });
-
-        window.addEventListener('offline', () => {
-            document.getElementById('onlineStatus').innerHTML = '🔴 Offline';
-        });
-
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(reg => console.log('Service Worker registered!', reg))
-                    .catch(err => console.log('Service Worker registration failed:', err));
-            });
+      function saveToHistory() {
+        if (opponents.length > 0) {
+          const history = {
+            opponents: opponents,
+            timestamp: new Date().toISOString(),
+            date: new Date().toLocaleString("id-ID"),
+          };
+          localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(history));
         }
+      }
 
-        function saveToLocalStorage() {
-            localStorage.setItem(STORAGE_KEYS.opponents, JSON.stringify(opponents));
-            localStorage.setItem(STORAGE_KEYS.eliminated, JSON.stringify([...eliminatedPlayers]));
-            localStorage.setItem(STORAGE_KEYS.fighting, fightingPlayer || '');
+      function loadFromHistory() {
+        const history = localStorage.getItem(STORAGE_KEYS.history);
+        if (history) {
+          const data = JSON.parse(history);
+          if (confirm(`Load data dari ${data.date}?`)) {
+            for (let i = 0; i < 7; i++) {
+              const input = document.getElementById(`opponent${i + 1}`);
+              if (input) input.value = data.opponents[i] || "";
+            }
+            alert("✅ Data berhasil di-load!");
+          }
+        } else {
+          alert("⚠️ Tidak ada history tersimpan!");
         }
+      }
 
-        function loadFromLocalStorage() {
-            const savedOpponents = localStorage.getItem(STORAGE_KEYS.opponents);
-            const savedEliminated = localStorage.getItem(STORAGE_KEYS.eliminated);
-            const savedFighting = localStorage.getItem(STORAGE_KEYS.fighting);
+      function loadFromLocalStorage() {
+        const savedOpponents = localStorage.getItem(STORAGE_KEYS.opponents);
+        const savedOrder = localStorage.getItem(STORAGE_KEYS.order);
+        const savedEliminated = localStorage.getItem(STORAGE_KEYS.eliminated);
+        const savedFighting = localStorage.getItem(STORAGE_KEYS.fighting);
 
-            if (savedOpponents) {
-                opponents = JSON.parse(savedOpponents);
-                eliminatedPlayers = new Set(JSON.parse(savedEliminated || '[]'));
-                fightingPlayer = savedFighting || null;
+        if (savedOpponents) {
+          opponents = JSON.parse(savedOpponents);
+          selectedOrder = JSON.parse(
+            savedOrder || "[null,null,null,null,null,null,null]"
+          );
+          eliminatedPlayers = new Set(JSON.parse(savedEliminated || "[]"));
+          fightingPlayer = savedFighting || null;
 
-                if (opponents.length > 0) {
-                    document.getElementById('inputSection').classList.add('hidden');
-                    document.getElementById('predictionSection').classList.remove('hidden');
-                    generateOpponentList();
-                    updateOrderDisplay();
-                }
-            }
-        }
-
-        function initInputFields() {
-            const container = document.getElementById('inputFields');
-            for (let i = 1; i <= 7; i++) {
-                const div = document.createElement('div');
-                div.className = 'flex items-center space-x-2';
-                div.innerHTML = `
-                    <span class="w-8 font-bold text-amber-400">${i}.</span>
-                    <input type="text" 
-                           id="opponent${i}" 
-                           placeholder="Nama musuh ${i}"
-                           class="flex-1 px-4 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                           maxlength="30">
-                `;
-                container.appendChild(div);
-            }
-        }
-
-        function saveOpponents() {
-            opponents = [];
-            let allFilled = true;
-            
-            for (let i = 1; i <= 7; i++) {
-                const input = document.getElementById(`opponent${i}`);
-                const name = input.value.trim();
-                
-                if (name === '') {
-                    allFilled = false;
-                    input.classList.add('ring-2', 'ring-red-500');
-                } else {
-                    input.classList.remove('ring-2', 'ring-red-500');
-                    opponents.push(name);
-                }
-            }
-            
-            if (!allFilled) {
-                alert('⚠️ Mohon isi semua 7 nama musuh!');
-                return;
-            }
-            
-            document.getElementById('inputSection').classList.add('hidden');
-            document.getElementById('predictionSection').classList.remove('hidden');
-            
-            eliminatedPlayers.clear();
-            fightingPlayer = null;
-            
-            generateOpponentList();
+          if (opponents.length > 0) {
+            document.getElementById("inputSection").classList.add("hidden");
+            document
+              .getElementById("predictionSection")
+              .classList.remove("hidden");
+            generateSelectionList();
             updateOrderDisplay();
-            saveToLocalStorage();
+          }
+        }
+      }
+
+      function initInputFields() {
+        const container = document.getElementById("inputFields");
+        container.innerHTML = ""; // Bersihkan jika sudah ada
+
+        for (let i = 1; i <= 7; i++) {
+          const div = document.createElement("div");
+          div.className = "flex items-center space-x-2";
+          div.innerHTML = `
+            <span class="w-8 font-bold text-amber-400">${i}.</span>
+            <input type="text" 
+                    id="opponent${i}" 
+                    placeholder="Nama musuh ${i}"
+                    class="flex-1 px-4 py-2 text-white bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    maxlength="30"
+                    onkeypress="if(event.key==='Enter' && ${i}<7) document.getElementById('opponent${
+            i + 1
+          }').focus(); else if(event.key==='Enter' && ${i}===7) saveOpponents();">
+                `;
+          container.appendChild(div);
+        }
+        const firstInput = document.getElementById("opponent1");
+        if (firstInput) firstInput.focus();
+      }
+
+      function saveOpponents() {
+        const newOpponents = [];
+        let allFilled = true;
+        const nameSet = new Set();
+
+        for (let i = 1; i <= 7; i++) {
+          const input = document.getElementById(`opponent${i}`);
+          const name = input.value.trim();
+
+          if (name === "") {
+            allFilled = false;
+            input.classList.add("ring-2", "ring-red-500");
+          } else if (nameSet.has(name.toLowerCase())) {
+            alert(`⚠️ Nama "${name}" sudah digunakan!`);
+            input.classList.add("ring-2", "ring-red-500");
+            return;
+          } else {
+            input.classList.remove("ring-2", "ring-red-500");
+            newOpponents.push(name);
+            nameSet.add(name.toLowerCase());
+          }
         }
 
-        function generateOpponentList() {
-            const container = document.getElementById('opponentList');
-            container.innerHTML = '';
-            
-            opponents.forEach((name, index) => {
-                const div = document.createElement('div');
-                div.className = 'opponent-item bg-gray-700 p-4 rounded-lg cursor-move flex items-center space-x-3 border-2 border-gray-600 hover:border-amber-500';
-                div.draggable = true;
-                div.dataset.index = index;
-                
-                div.innerHTML = `
-                    <span class="text-2xl">☰</span>
-                    <span class="flex items-center justify-center w-8 h-8 text-sm font-bold text-gray-900 rounded-full bg-amber-500">
-                        ${index + 1}
+        if (!allFilled) {
+          alert("⚠️ Mohon isi semua 7 nama musuh!");
+          return;
+        }
+
+        const namesChanged =
+          JSON.stringify(opponents) !== JSON.stringify(newOpponents);
+
+        opponents = newOpponents;
+
+        if (namesChanged) {
+          selectedOrder = new Array(7).fill(null);
+          eliminatedPlayers.clear();
+          fightingPlayer = null;
+        }
+
+        document.getElementById("inputSection").classList.add("hidden");
+        document.getElementById("predictionSection").classList.remove("hidden");
+
+        generateSelectionList();
+        updateOrderDisplay();
+
+        saveToLocalStorage();
+        saveToHistory();
+      }
+
+      function getLastRemaining() {
+        const selected = selectedOrder
+          .slice(0, 6)
+          .filter((item) => item !== null);
+        const remaining = opponents.filter((name) => !selected.includes(name));
+        return remaining.length === 1 ? remaining[0] : null;
+      }
+
+      function autoFillLast() {
+        const lastRemaining = getLastRemaining();
+        if (lastRemaining) {
+          selectedOrder[6] = lastRemaining;
+          return true;
+        } else {
+          selectedOrder[6] = null;
+        }
+        return false;
+      }
+
+      // Fungsi pembantu baru untuk mengisi opsi dropdown (DIPERBAIKI)
+      function populateSelectOptions(selectElement, position) {
+        // 1. Kumpulkan nama-nama yang sudah dipilih di posisi 1-6
+        const selectedNames = selectedOrder
+          .slice(0, 6)
+          .filter((item) => item !== null);
+
+        // 2. Simpan nilai yang sedang dipilih (untuk mempertahankan pilihan setelah refresh opsi)
+        const currentValue = selectedOrder[position] || "";
+
+        // 3. Buat ulang opsi, mulai dengan placeholder/default
+        selectElement.innerHTML = `
+        <option value="" disabled ${currentValue === "" ? "selected" : ""}>
+            -- Pilih Musuh untuk Posisi ${position + 1} --
+        </option>
+    `;
+
+        opponents.forEach((name) => {
+          // Cek apakah nama ini sudah dipilih di posisi lain
+          const isSelectedElsewhere =
+            selectedNames.includes(name) && name !== currentValue;
+
+          // Hanya tampilkan jika belum dipilih di tempat lain
+          if (!isSelectedElsewhere) {
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = name;
+
+            // Tandai opsi yang sedang dipilih
+            if (currentValue === name) {
+              option.selected = true;
+            }
+            selectElement.appendChild(option);
+          }
+        });
+
+        // Jika currentValue ada tetapi tidak ada di daftar opsi yang dihasilkan
+        // (ini terjadi jika nama tersebut baru saja dipilih di slot lain),
+        // kita perlu memastikan selectElement.value diatur dengan benar.
+        if (currentValue === "") {
+          selectElement.value = ""; // Memilih placeholder
+        }
+      }
+
+      // Modifikasi pada generateSelectionList (Hanya bagian 1-6)
+      function generateSelectionList() {
+        // ... (Logika awal sama) ...
+        const container = document.getElementById("selectionList");
+        const shouldAutoFill = autoFillLast();
+
+        if (container.children.length === 0) {
+          // ... (Logika inisialisasi div sama) ...
+          for (let position = 0; position < 7; position++) {
+            const div = document.createElement("div");
+            div.id = `slot-container-${position}`;
+            container.appendChild(div);
+          }
+        }
+
+        for (let position = 0; position < 7; position++) {
+          const div = document.getElementById(`slot-container-${position}`);
+          const isSelected = selectedOrder[position] !== null;
+          const isAutoFilled = position === 6 && shouldAutoFill;
+
+          // ... (Perbarui kelas CSS kontainer sama) ...
+          div.className = `p-4 rounded-lg flex items-center space-x-3 transition duration-200 ${
+            isAutoFilled
+              ? "auto-filled-slot"
+              : isSelected
+              ? "filled-slot"
+              : "empty-slot"
+          }`;
+
+          // POSISI 7 (Auto-Fill) - Logika sama
+          if (position === 6) {
+            // ... (Logika posisi 7 sama) ...
+            const newContent = `
+                <span class="flex items-center justify-center w-10 h-10 text-lg font-bold rounded-full ${
+                  isAutoFilled
+                    ? "bg-green-500 text-gray-900"
+                    : "bg-gray-600 text-gray-400"
+                } position-badge">
+                    7
+                </span>
+                <div class="flex-1">
+                    <div class="px-4 py-3 text-white bg-gray-700 border-2 rounded-lg ${
+                      isAutoFilled ? "border-green-500" : "border-gray-600"
+                    }">
+                        ${
+                          isAutoFilled
+                            ? `<span class="font-bold">${selectedOrder[6]}</span> <span class="ml-2 text-sm text-green-400 auto-label">✓ Otomatis Terisi</span>`
+                            : '<span class="text-gray-500">Akan terisi otomatis</span>'
+                        }
+                    </div>
+                </div>
+                ${
+                  isAutoFilled
+                    ? `
+                        <button onclick="clearSelection(6)" 
+                                class="px-4 py-2 text-sm font-bold text-white transition bg-red-600 rounded-lg hover:bg-red-700">
+                            ✕ Clear
+                        </button>
+                    `
+                    : `
+                        <div class="w-20"></div>
+                    `
+                }
+            `;
+            if (div.innerHTML.trim() !== newContent.trim()) {
+              div.innerHTML = newContent;
+            }
+          }
+          // POSISI 1-6 (Dropdown)
+          else {
+            let select = document.getElementById(`select${position}`);
+            let clearBtn = document.getElementById(`clear-btn-${position}`);
+
+            // Buat struktur utamanya HANYA SEKALI
+            if (!select) {
+              div.innerHTML = `
+                    <span class="flex items-center justify-center w-10 h-10 text-lg font-bold text-gray-900 rounded-full bg-amber-500 position-badge">
+                        ${position + 1}
                     </span>
-                    <span class="flex-1 font-semibold text-white">${name}</span>
-                    <span class="text-sm text-gray-400">↕️</span>
+                    <div class="relative flex-1 select-container">
+                        <select id="select${position}" 
+                                onchange="handleSelection(${position}, this.value)"
+                                class="w-full px-4 py-3 text-white bg-gray-700 border-2 border-gray-600 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 hover:border-amber-400 transition">
+                        </select>
+                        <span class="text-amber-400 select-arrow">▼</span>
+                    </div>
+                    <button id="clear-btn-${position}" onclick="clearSelection(${position})" 
+                            class="px-4 py-2 text-sm font-bold text-white transition bg-red-600 rounded-lg hover:bg-red-700 ${
+                              isSelected ? "" : "hidden"
+                            }">
+                        ✕ Clear
+                    </button>
                 `;
-                
-                div.addEventListener('dragstart', handleDragStart);
-                div.addEventListener('dragend', handleDragEnd);
-                div.addEventListener('dragover', handleDragOver);
-                div.addEventListener('drop', handleDrop);
-                div.addEventListener('dragenter', handleDragEnter);
-                div.addEventListener('dragleave', handleDragLeave);
-                
-                container.appendChild(div);
-            });
-        }
-
-        function handleDragStart(e) {
-            draggedElement = this;
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.innerHTML);
-        }
-
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
-            document.querySelectorAll('.opponent-item').forEach(item => {
-                item.classList.remove('drag-over');
-            });
-        }
-
-        function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
+              select = document.getElementById(`select${position}`);
+              clearBtn = document.getElementById(`clear-btn-${position}`);
             }
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
 
-        function handleDragEnter(e) {
-            if (this !== draggedElement) {
-                this.classList.add('drag-over');
+            // Panggil fungsi pembantu: HANYA perbarui opsi di dalam dropdown
+            populateSelectOptions(select, position);
+
+            // Perbarui visibilitas tombol Clear
+            if (clearBtn) {
+              if (isSelected) {
+                clearBtn.classList.remove("hidden");
+              } else {
+                clearBtn.classList.add("hidden");
+              }
             }
+          }
+        }
+      }
+      function handleSelection(position, value) {
+        // Simpan nama musuh yang mungkin terisi otomatis di slot 7 sebelumnya
+        const prevAutoFillName = selectedOrder[6];
+
+        // Hapus nama ini dari posisi lain jika sebelumnya terisi
+        const existingIndex = selectedOrder.indexOf(value);
+        if (existingIndex !== -1 && existingIndex !== position) {
+          selectedOrder[existingIndex] = null;
         }
 
-        function handleDragLeave(e) {
-            this.classList.remove('drag-over');
+        // Set new selection
+        selectedOrder[position] = value === "" ? null : value;
+
+        // Regenerate to update all dropdowns and auto-fill if needed
+        generateSelectionList();
+        updateOrderDisplay();
+        saveToLocalStorage();
+
+        // Dapatkan nama baru yang mungkin terisi otomatis
+        const currentAutoFillName = selectedOrder[6];
+
+        // --- PENINGKATAN UX BARU: Highlight Slot 7 jika terjadi perubahan ---
+        if (currentAutoFillName !== prevAutoFillName) {
+          const slot7Div = document.getElementById("slot-container-6"); // Slot 7 adalah index 6
+          if (slot7Div) {
+            // Tambahkan kelas animasi ke kontainer slot 7
+            slot7Div.classList.add("success-animation");
+            setTimeout(
+              () => slot7Div.classList.remove("success-animation"),
+              500
+            );
+          }
         }
 
-        function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
-            
-            if (draggedElement !== this) {
-                const draggedIndex = parseInt(draggedElement.dataset.index);
-                const targetIndex = parseInt(this.dataset.index);
-                
-                const temp = opponents[draggedIndex];
-                opponents[draggedIndex] = opponents[targetIndex];
-                opponents[targetIndex] = temp;
-                
-                generateOpponentList();
-                updateOrderDisplay();
-                saveToLocalStorage();
-            }
-            
-            return false;
-        }
+        // Add success animation to the currently selected slot (existing logic)
+        setTimeout(() => {
+          const div = document.getElementById(`slot-container-${position}`);
+          if (div) {
+            div.classList.add("success-animation");
+            setTimeout(() => div.classList.remove("success-animation"), 500);
+          }
+        }, 10);
+      }
 
-        function updateOrderDisplay() {
-            const container = document.getElementById('orderDisplay');
-            container.innerHTML = '';
-            
-            opponents.forEach((name, index) => {
-                const li = document.createElement('li');
-                const isEliminated = eliminatedPlayers.has(name);
-                const isFighting = fightingPlayer === name;
-                
-                li.className = `bg-gray-800 rounded-lg p-4 flex items-center space-x-3 border-2 border-gray-600 hover:border-amber-400 transition duration-300 ${isEliminated ? 'eliminated' : ''} ${isFighting ? 'fighting' : ''}`;
-                
-                li.innerHTML = `
-                    <div class="bg-amber-500 text-gray-900 font-black w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg ${isEliminated ? 'opacity-50' : ''}" 
-                         onclick="event.stopPropagation(); toggleFighting('${name}');"
-                         style="cursor: pointer;">
-                        ${index + 1}
+      function clearSelection(position) {
+        selectedOrder[position] = null;
+
+        generateSelectionList();
+        updateOrderDisplay();
+        saveToLocalStorage();
+      }
+
+      // Fungsi updateOrderDisplay yang sudah disempurnakan (UX: Urutan Aktif)
+      function updateOrderDisplay() {
+        const container = document.getElementById("orderDisplay");
+        container.innerHTML = "";
+
+        // 1. Filter pemain yang belum tereliminasi, pertahankan urutan asli
+        const activePlayers = selectedOrder.filter(
+          (name) => name !== null && !eliminatedPlayers.has(name)
+        );
+
+        let hasAnySelection = activePlayers.length > 0;
+
+        activePlayers.forEach((name, newIndex) => {
+          // Cari index asli di selectedOrder (untuk cek Auto-Fill)
+          const originalIndex = selectedOrder.indexOf(name);
+
+          const isFighting = fightingPlayer === name;
+          const isAutoFilled =
+            originalIndex === 6 && getLastRemaining() === name;
+
+          // newIndex adalah urutan yang sebenarnya (1, 2, 3, ...)
+          const displayIndex = newIndex + 1;
+
+          const li = document.createElement("li");
+          li.className = `bg-gray-800 rounded-lg p-4 flex items-center space-x-3 border-2 border-gray-600 hover:border-amber-400 transition duration-300 ${
+            isFighting ? "fighting" : ""
+          }`;
+
+          // Tampilan baru menggunakan displayIndex
+          li.innerHTML = `
+                <div class="font-black rounded-full flex items-center justify-center text-xl shadow-lg ${"bg-amber-500 w-12 h-12"} text-gray-900 ${
+            isFighting ? "fighting-pulse" : ""
+          }" 
+                    onclick="event.stopPropagation(); toggleFighting('${name}');"
+                    style="cursor: pointer;">
+                    ${displayIndex}
+                </div>
+                <div class="flex-1" onclick="toggleFighting('${name}');" style="cursor: pointer;">
+                    <div class="text-lg font-bold text-white player-name">
+                        ${name}
                     </div>
-                    <div class="flex-1" onclick="toggleFighting('${name}');" style="cursor: pointer;">
-                        <div class="text-lg font-bold text-white player-name">${name}</div>
-                        <div class="text-sm text-gray-400">
-                            ${isEliminated ? '💀 Eliminated' : isFighting ? '⚔️ Fighting!' : 'Posisi ke-' + (index + 1)}
-                        </div>
+                    <div class="text-sm text-gray-400">
+                        ${
+                          isFighting
+                            ? "⚔️ Fighting!"
+                            : "Urutan Slot " + (originalIndex + 1)
+                        }
                     </div>
-                    <div class="text-3xl">
-                        ${isEliminated ? '💀' : isFighting ? '⚔️' : (index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎯')}
-                    </div>
-                    ${isEliminated ? `
-                        <button onclick="event.stopPropagation(); undoElimination('${name}');" 
-                                class="flex items-center px-4 py-2 space-x-1 text-sm font-bold text-white bg-green-600 rounded-lg shadow-lg eliminate-btn hover:bg-green-700">
-                            <span>↩️</span>
-                            <span>Undo</span>
-                        </button>
-                    ` : `
-                        <button onclick="event.stopPropagation(); eliminatePlayer('${name}');" 
-                                class="flex items-center px-4 py-2 space-x-1 text-sm font-bold text-white bg-red-600 rounded-lg shadow-lg eliminate-btn hover:bg-red-700">
-                            <span>💀</span>
-                            <span>Kill</span>
-                        </button>
-                    `}
-                `;
-                container.appendChild(li);
-            });
-        }
-        
-        function toggleFighting(playerName) {
-            if (eliminatedPlayers.has(playerName)) {
-                return;
-            }
-            
-            if (fightingPlayer === playerName) {
-                fightingPlayer = null;
-            } else {
-                fightingPlayer = playerName;
-            }
-            updateOrderDisplay();
-            saveToLocalStorage();
-        }
-        
-        function eliminatePlayer(playerName) {
-            eliminatedPlayers.add(playerName);
-            if (fightingPlayer === playerName) {
-                fightingPlayer = null;
-            }
-            updateOrderDisplay();
-            saveToLocalStorage();
-        }
-        
-        function undoElimination(playerName) {
-            eliminatedPlayers.delete(playerName);
-            updateOrderDisplay();
-            saveToLocalStorage();
-        }
-
-        function resetApp() {
-            if (confirm('🔄 Yakin ingin mereset? Data akan hilang.')) {
-                opponents = [];
-                eliminatedPlayers.clear();
-                fightingPlayer = null;
-                
-                localStorage.removeItem(STORAGE_KEYS.opponents);
-                localStorage.removeItem(STORAGE_KEYS.eliminated);
-                localStorage.removeItem(STORAGE_KEYS.fighting);
-                
-                for (let i = 1; i <= 7; i++) {
-                    document.getElementById(`opponent${i}`).value = '';
-                }
-                
-                document.getElementById('inputSection').classList.remove('hidden');
-                document.getElementById('predictionSection').classList.add('hidden');
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            initInputFields();
-            loadFromLocalStorage();
+                </div>
+                <div class="text-3xl">
+                    ${
+                      displayIndex === 1
+                        ? "🥇"
+                        : displayIndex === 2
+                        ? "🥈"
+                        : displayIndex === 3
+                        ? "🥉"
+                        : "🎯"
+                    }
+                </div>
+                <button onclick="event.stopPropagation(); eliminatePlayer('${name}');" 
+                    class="flex items-center px-4 py-2 space-x-1 text-sm font-bold text-white bg-red-600 rounded-lg shadow-lg eliminate-btn hover:bg-red-700">
+                    <span>💀</span>
+                    <span>Kill</span>
+                </button>
+            `;
+          container.appendChild(li);
         });
+
+        // Tambahkan daftar pemain yang tereliminasi (di bagian bawah)
+        if (eliminatedPlayers.size > 0) {
+          const eliminatedList = document.createElement("li");
+          eliminatedList.className =
+            "p-4 mt-4 text-center text-gray-400 bg-gray-900 rounded-lg";
+          eliminatedList.innerHTML = `
+                <h4 class="mb-2 text-red-400 font-bold">💀 TERELIMINASI (${
+                  eliminatedPlayers.size
+                } Player)</h4>
+                <div class="text-sm">
+                    ${[...eliminatedPlayers]
+                      .map(
+                        (name) =>
+                          `<span class="line-through mx-2 text-red-500 cursor-pointer hover:text-red-300 transition" onclick="undoElimination('${name}')">${name}</span>`
+                      )
+                      .join(" | ")}
+                </div>
+            `;
+          container.appendChild(eliminatedList);
+        }
+
+        if (!hasAnySelection && eliminatedPlayers.size === 0) {
+          container.innerHTML =
+            '<li class="p-4 text-center text-gray-500">Belum ada urutan yang dipilih</li>';
+        }
+      }
+
+      function toggleFighting(playerName) {
+        if (eliminatedPlayers.has(playerName)) {
+          return;
+        }
+
+        if (fightingPlayer === playerName) {
+          fightingPlayer = null;
+        } else {
+          fightingPlayer = playerName;
+        }
+        updateOrderDisplay();
+
+        saveToLocalStorage();
+      }
+
+      function eliminatePlayer(playerName) {
+        eliminatedPlayers.add(playerName);
+        if (fightingPlayer === playerName) {
+          fightingPlayer = null;
+        }
+        updateOrderDisplay(); // Memperbarui urutan aktif
+
+        saveToLocalStorage();
+      }
+
+      function undoElimination(playerName) {
+        eliminatedPlayers.delete(playerName);
+        updateOrderDisplay();
+
+        saveToLocalStorage();
+      }
+
+      function resetApp() {
+        if (confirm("🔄 Yakin ingin mereset? Data akan hilang.")) {
+          opponents = [];
+          selectedOrder = new Array(7).fill(null);
+          eliminatedPlayers.clear();
+          fightingPlayer = null;
+
+          Object.values(STORAGE_KEYS).forEach((key) => {
+            if (key !== STORAGE_KEYS.history) {
+              localStorage.removeItem(key);
+            }
+          });
+
+          document.getElementById("inputSection").classList.remove("hidden");
+          document.getElementById("predictionSection").classList.add("hidden");
+
+          initInputFields();
+        }
+      }
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          if (e.key === "s") {
+            e.preventDefault();
+            if (
+              !document
+                .getElementById("inputSection")
+                .classList.contains("hidden")
+            ) {
+              saveOpponents();
+            }
+          }
+        }
+      });
+
+      window.addEventListener("DOMContentLoaded", () => {
+        initInputFields();
+        loadFromLocalStorage();
+      });
     </script>
-</body>
+  </body>
 </html>
